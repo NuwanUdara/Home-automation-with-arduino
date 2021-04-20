@@ -9,7 +9,7 @@ RTC_DS1307 rtc; // the pins are defined inside
 
 dht11 DHT11;
 
-
+String temper;
 char * bluetoothData;
 float temp;
 float humid;
@@ -46,7 +46,6 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
         }
       
       }
-  }
   
   else{  //// limited time mode
     if(timeNow>=ric[1] and timeNow<=ric[2]){return HIGH;}
@@ -65,11 +64,8 @@ int Now(){ //get time in hhmm format
 
 
 void blu_proc(){ // get raw data from bluetooth module
-  while (Serial.available()){
-    
-    bluetoothData += char(Serial.read());
-    delay(10);
-    }
+  temper=Serial.readString();
+  bluetoothData=temper.c_str();
   }
 
 void relay_update(){ // bluetoothData looks like 2,1,1,2359,2359
@@ -103,7 +99,7 @@ void setup() {
 void loop() {
   timeNow=Now();
   //Serial.println(timeNow);
-  while (Serial.available()){
+  if (Serial.available()>0){
     blu_proc();//Get bluetooth input
     relay_update();//update the realy using input data
     bluetoothData="";// reset storeage
