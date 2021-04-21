@@ -1,19 +1,72 @@
 
-int realaydata[4][4]={{0,1,0,0},{1,0006,0007,0},{0,1,0,0},{2,0,0,0}}; //a,b,c,d relay data (10,11,12,13 ports reserved)
+int realaydata[4][4]={{0,1,0,0},{1,0006,0007,0},{0,1,0,0},{2,33,24,0}}; //a,b,c,d relay data (10,11,12,13 ports reserved)
 int statedata[4]={LOW,LOW,LOW,LOW}; // realay a,b,c,d states
 
-#include <RTClib.h>// add the RTC module, the pins are 4,3 resererved
-RTC_DS1307 rtc; // the pins are defined inside
+#include "Wire.h"
+#define DS3231_I2C_ADDRESS 0x68
+
 #include <dht11.h>
 #define DHT11PIN 7 // pin 7 reserved
 
 dht11 DHT11;
+
 
 String temper;
 char * bluetoothData;
 float temp;
 float humid;
 int timeNow;
+
+byte decToBcd(byte val){
+  return( (val/10*16) + (val%10) );
+}
+
+byte bcdToDec(byte val){
+  return( (val/16*10) + (val%16) );
+}
+
+void setDS3231time( byte second, byte minute, byte hour){
+  // sets time and date data to DS3231
+  Wire.beginTransmission(DS3231_I2C_ADDRESS);
+  Wire.write(0); // set next input to start at the seconds register
+  Wire.write(decToBcd(second)); // set seconds
+  Wire.write(decToBcd(minute)); // set minutes
+  Wire.write(decToBcd(hour)); // set hours
+  //Wire.write(decToBcd(dayOfMonth)); // set date (1 to 31)
+  //Wire.write(decToBcd(month)); // set month
+  //Wire.write(decToBcd(year)); // set year (0 to 99)
+  Wire.endTransmission();
+}
+
+void readDS3231time(byte *second,
+byte *minute,
+byte *hour)
+//byte *dayOfMonth,
+//byte *month,
+//byte *year
+
+{
+  Wire.beginTransmission(DS3231_I2C_ADDRESS);
+  Wire.write(0); // set DS3231 register pointer to 00h
+  Wire.endTransmission();
+  Wire.requestFrom(DS3231_I2C_ADDRESS, 3);
+  // request seven bytes of data from DS3231 starting from register 00h
+  *second = bcdToDec(Wire.read() & 0x7f);
+  *minute = bcdToDec(Wire.read());
+  *hour = bcdToDec(Wire.read() & 0x3f);
+  //*dayOfWeek = bcdToDec(Wire.read());
+  //*dayOfMonth = bcdToDec(Wire.read());
+  //*month = bcdToDec(Wire.read());
+  //*year = bcdToDec(Wire.read());
+}
+
+void displayTime(){
+  
+  byte second,minute, hour;
+  readDS3231time(&second,&minute, &hour);
+  int timeNow=hour*100+minute;
+  //Serial.println(timeNow);
+  }
 
 int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor data, will calculate Weather to turn on or off the realy
   
@@ -28,11 +81,11 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
     }
     
   else if (ric[0]==2){  ///sensor mode ldr will be added later.
-    if(temp>27){
+    if(temp>ric[1]){
       Serial.println(temp);
       Serial.println("HOT");
       return HIGH;}
-    else if (temp<15){
+    else if (temp<ric[2]){
       Serial.println(temp);
       Serial.println("COLD");
       return LOW;}
@@ -54,12 +107,6 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
       return LOW;} 
   }
   
-  }
-
-int Now(){ //get time in hhmm format
-  DateTime now = rtc.now();
-  timeNow=(now.hour()*100)+(now.minute());
-  return timeNow;
   }
 
 
@@ -89,15 +136,17 @@ void Temp_hum(){
   }
   
 void setup() {
+  Wire.begin();
   pinMode(10,OUTPUT);
   pinMode(11,OUTPUT);
   pinMode(12,OUTPUT);
   pinMode(13,OUTPUT);
   Serial.begin(9600);
+  //setDS3231time(50,59,12);
 }
 
 void loop() {
-  timeNow=Now();
+  displayTime();// take time
   //Serial.println(timeNow);
   if (Serial.available()>0){
     blu_proc();//Get bluetooth input
@@ -115,6 +164,6 @@ void loop() {
     digitalWrite(p,stat);
     }
     
-  delay(2500);
+  delay(1000);
      
 }
