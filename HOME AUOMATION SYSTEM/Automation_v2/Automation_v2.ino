@@ -1,5 +1,5 @@
 
-int realaydata[4][4]={{0,1,0,0},{1,0006,0007,0},{0,1,0,0},{2,33,24,0}}; //a,b,c,d relay data (10,11,12,13 ports reserved)
+int realaydata[4][4]={{0,1,0,0},{0,1,0,0},{0,1,0,0},{0,1,0,0}}; //a,b,c,d relay data (10,11,12,13 ports reserved)
 int statedata[4]={LOW,LOW,LOW,LOW}; // realay a,b,c,d states
 
 #include "Wire.h"
@@ -60,12 +60,12 @@ byte *hour)
   //*year = bcdToDec(Wire.read());
 }
 
-void displayTime(){
+int displayTime(){
   
   byte second,minute, hour;
   readDS3231time(&second,&minute, &hour);
-  int timeNow=hour*100+minute;
-  //Serial.println(timeNow);
+  int tic=hour*100+minute;
+  return tic;
   }
 
 int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor data, will calculate Weather to turn on or off the realy
@@ -136,18 +136,19 @@ void Temp_hum(){
   }
   
 void setup() {
+  
   Wire.begin();
   pinMode(10,OUTPUT);
   pinMode(11,OUTPUT);
   pinMode(12,OUTPUT);
   pinMode(13,OUTPUT);
   Serial.begin(9600);
-  //setDS3231time(50,59,12);
+  setDS3231time(50,1,20);
 }
 
 void loop() {
-  displayTime();// take time
-  //Serial.println(timeNow);
+  timeNow=displayTime();// take time
+  Serial.println(timeNow);
   if (Serial.available()>0){
     blu_proc();//Get bluetooth input
     relay_update();//update the realy using input data
