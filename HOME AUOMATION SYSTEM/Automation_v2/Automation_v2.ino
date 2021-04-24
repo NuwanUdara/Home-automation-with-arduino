@@ -1,9 +1,9 @@
 
-int realaydata[4][4]={{0,1,0,0},{0,1,0,0},{0,1,0,0},{0,1,0,0}}; //a,b,c,d relay data (10,11,12,13 ports reserved)
+int realaydata[4][4]={{0,1,0,0},{0,1,0,0},{0,1,0,0},{5,14,25,0}}; //a,b,c,d relay data (10,11,12,13 ports reserved)
 int statedata[4]={LOW,LOW,LOW,LOW}; // realay a,b,c,d states
 
 #include "Wire.h"
-#define DS3231_I2C_ADDRESS 0x68
+#define DS3231_I2C_ADDRESS 0x68//A4,A5 reserved
 
 #include <dht11.h>
 #define DHT11PIN 7 // pin 7 reserved
@@ -16,6 +16,7 @@ char * bluetoothData;
 float temp;
 float humid;
 int timeNow;
+int count=0;
 
 byte decToBcd(byte val){
   return( (val/10*16) + (val%10) );
@@ -80,14 +81,14 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
     else{return LOW;}
     }
     
-  else if (ric[0]==2){  ///sensor mode ldr will be added later.
+  else if (ric[0]==2){  //Temparature Mode for Cooling
     if(temp>ric[1]){
-      Serial.println(temp);
-      Serial.println("HOT");
+      //Serial.println(temp);
+      //Serial.println("HOT");
       return HIGH;}
     else if (temp<ric[2]){
-      Serial.println(temp);
-      Serial.println("COLD");
+      //Serial.println(temp);
+      //Serial.println("COLD");
       return LOW;}
     else{
 
@@ -100,12 +101,36 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
       
       }
   
-  else{  //// limited time mode
+  else if(ric[0]==3){  //// limited time mode
     if(timeNow>=ric[1] and timeNow<=ric[2]){return HIGH;}
     else{
       //write a code to reset the array so it wont repeat
+      
+      for(int i = 0; i < 4; i++) {
+    
+        realaydata[ind][i] = 0 ;  // put your value here.
+        }
       return LOW;} 
   }
+  
+   else if(ric[0]==4){// Hourly Mode
+    // find a proper algorithem
+    }
+   else if (ric[0]==5){  // Temparature Mode for heating
+    //Serial.println("We are at heating");
+    if(temp<ric[1]){
+      //Serial.println(temp);
+      //Serial.println("Too cold");
+      return HIGH;}
+    else if (temp>ric[2]){
+      //Serial.println(temp);
+      //Serial.println("Going Too hot");
+      return LOW;}
+    else{
+      if (statedata[ind]==LOW){return LOW;}
+      else{return HIGH;}
+        }
+      }
   
   }
 
@@ -117,7 +142,16 @@ void blu_proc(){ // get raw data from bluetooth module
 
 void relay_update(){ // bluetoothData looks like 2,1,1,2359,2359
   char * piece= strtok(bluetoothData,",");
-  int relay=atoi(piece);//First chunk is the port
+  int relay=atoi(piece);//First chunk is the port or incase of clock mode
+  if (relay==7){// trigger clock mode
+    int clock_data[4];
+    clock_data[0]=atoi(strtok(NULL,","));//set mode
+    clock_data[1]=atoi(strtok(NULL,","));
+    clock_data[2]=atoi(strtok(NULL,","));
+    clock_data[3]=atoi(strtok(NULL,","));
+    setDS3231time(clock_data[0],clock_data[1],clock_data[2]);
+    }
+    
   realaydata[relay][0]=atoi(strtok(NULL,","));//set mode
   realaydata[relay][1]=atoi(strtok(NULL,","));
   realaydata[relay][2]=atoi(strtok(NULL,","));
@@ -143,7 +177,7 @@ void setup() {
   pinMode(12,OUTPUT);
   pinMode(13,OUTPUT);
   Serial.begin(9600);
-  setDS3231time(50,1,20);
+  setDS3231time(00,00,12);// a initial state for Now
 }
 
 void loop() {
