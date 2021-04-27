@@ -16,7 +16,7 @@ char * bluetoothData;
 float temp;
 float humid;
 int timeNow;
-int count=0;
+int count[4]={0,0,0,0};
 
 byte decToBcd(byte val){
   return( (val/10*16) + (val%10) );
@@ -115,6 +115,34 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
   
    else if(ric[0]==4){// Hourly Mode
     // find a proper algorithem
+    int minu=timeNow%100;// get minutes
+    if (ric[1]==0){ //run every hour permanently
+      if(minu>=ric[2] and minu<ric[3]){return HIGH;}
+      else{
+        return LOW;}
+      }
+    else{
+      if (count[ind]==ric[1]){ // the repetetion is over
+        count[ind]=0;
+        for(int i = 0; i < 4; i++){
+          realaydata[ind][i] = 0 ;  // reset read data.
+        }
+        return LOW;// turn off
+        }
+        
+      else if (count[ind]<ric[1]){// since we start using 0 it sould work
+        if (minu>=ric[2] and minu<ric[3]){// check if it's in the proper time limit we assigned
+          return HIGH;
+          }
+        else if (minu<ric[2] or minu>=ric[3]){ // not in the given limit 
+          if (statedata[ind]==HIGH){// if it just got low the counter need to go up
+            count[ind]=count[ind]+1;
+            return LOW;
+            }          
+            }
+        }
+      else{return LOW;}
+      }
     }
    else if (ric[0]==5){  // Temparature Mode for heating
     //Serial.println("We are at heating");
@@ -142,8 +170,8 @@ void blu_proc(){ // get raw data from bluetooth module
 
 void relay_update(){ // bluetoothData looks like 2,1,1,2359,2359
   char * piece= strtok(bluetoothData,",");
-  int relay=atoi(piece);//First chunk is the port or incase of clock mode
-  if (relay==7){// trigger clock mode
+  int relay=atoi(piece);//First chunk is the port or incase of clock mode 7
+  if (relay==7){// trigger time setting mode
     int clock_data[4];
     clock_data[0]=atoi(strtok(NULL,","));//set mode
     clock_data[1]=atoi(strtok(NULL,","));
@@ -151,11 +179,12 @@ void relay_update(){ // bluetoothData looks like 2,1,1,2359,2359
     clock_data[3]=atoi(strtok(NULL,","));
     setDS3231time(clock_data[0],clock_data[1],clock_data[2]);
     }
-    
+  else{  
   realaydata[relay][0]=atoi(strtok(NULL,","));//set mode
   realaydata[relay][1]=atoi(strtok(NULL,","));
   realaydata[relay][2]=atoi(strtok(NULL,","));
-  realaydata[relay][3]=atoi(strtok(NULL,","));
+  realaydata[relay][3]=atoi(strtok(NULL,","));}
+  
   }
   
 void Temp_hum(){
@@ -165,24 +194,23 @@ void Temp_hum(){
   //Serial.println("humidity");
   //Serial.println(humid);
   //Serial.println("Temp");
-  //Serial.println(temp);
+  //Serial.println(temp);// write codes here to print on LCD 
   
   }
   
 void setup() {
-  
   Wire.begin();
   pinMode(10,OUTPUT);
   pinMode(11,OUTPUT);
   pinMode(12,OUTPUT);
   pinMode(13,OUTPUT);
   Serial.begin(9600);
-  setDS3231time(00,00,12);// a initial state for Now
+  setDS3231time(0,0,12);// a initial state for Now
 }
 
 void loop() {
   timeNow=displayTime();// take time
-  Serial.println(timeNow);
+  //Serial.println(timeNow);
   if (Serial.available()>0){
     blu_proc();//Get bluetooth input
     relay_update();//update the realy using input data
@@ -198,7 +226,6 @@ void loop() {
     statedata[a]=stat;// this is redundent for now, but will be useful for display
     digitalWrite(p,stat);
     }
-    
   delay(1000);
      
 }
