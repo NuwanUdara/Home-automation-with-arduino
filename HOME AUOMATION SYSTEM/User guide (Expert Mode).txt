@@ -52,3 +52,9 @@ v1:- Minutes
 v2:- Hour in 24 hour style
 v3 is not used
 exaple:- 7,15,56,22,0
+
+8:- Humidty Mode // we will try to keep the humidity in a range// proper range is 30% to 50%
+v1- Below level
+v2- Upper level
+v3- Reduendent but still have to provide a integer
+exaple:-3,8,30,50,0
