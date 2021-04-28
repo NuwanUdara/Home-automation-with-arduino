@@ -4,12 +4,10 @@ int statedata[4]={LOW,LOW,LOW,LOW}; // realay a,b,c,d states
 
 #include "Wire.h"
 #define DS3231_I2C_ADDRESS 0x68//A4,A5 reserved
-
 #include <dht11.h>
 #define DHT11PIN 7 // pin 7 reserved
 
 dht11 DHT11;
-
 
 String temper;
 char * bluetoothData;
@@ -159,6 +157,20 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
       else{return HIGH;}
         }
       }
+     else if(ric[0]==8){ // humidity mode
+      int mid=(ric[2]+ric[1])/2;
+      if (humid>ric[2]){ // too much humid
+        return HIGH;
+      }
+      
+      else if(humid<ric[1]){// too dry
+        return HIGH;
+        }
+       else if(humid==mid){// will turn off the device when the humidty in a proper value which is comfortable
+        return LOW;
+        }  
+      
+      }
   
   }
 
@@ -220,12 +232,11 @@ void loop() {
   Temp_hum();
   
   for (unsigned int a = 0; a < 4; a = a + 1){
-    int p=a+10; // port
+    int p=a+10; // port for inconviance
     
     int stat=myrelayind(realaydata[a],a);//High or LOW value for
     statedata[a]=stat;// this is redundent for now, but will be useful for display
     digitalWrite(p,stat);
     }
-  delay(1000);
-     
+  delay(1000);// delay can be increased but the clock will not work properly
 }
