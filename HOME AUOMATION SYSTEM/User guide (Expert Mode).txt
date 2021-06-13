@@ -44,7 +44,17 @@ v2:- Stop at celcius (Upper bound)
 v3 not used
 example:- 1,5,15,35,0
 
-6:- this one is reserved for LDR mode which will be added later
+6:- LDR mode
+v1:- working mode
+0:- On when dark
+1:- Off when dark
+2:-On when dark and off when bright
+3:- off when dark and On when bright
+4:- On when bright
+5:- Off when bright
+8:- this is to stop further triggers. Do not send this though blutooth
+v2:-sensativity
+v3:-free time
 
 7:- This is basic Internal Clock time input // Set Time 
 m:- Seconds

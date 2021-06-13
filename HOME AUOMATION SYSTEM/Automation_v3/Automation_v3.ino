@@ -18,11 +18,18 @@ float temp;
 float humid;
 int timeNow;
 int count[4]={0,0,0,0};
+int safetime[4]={0,0,0,0};
+//int ltmt[4]={0,0,0,0};
 String hhmmss=":";
 int anim;
 int animc=0;
 int ldone=0;
 int rdone=1;
+
+const int LDR = A0;
+int ldr_reading = 0;
+int ldr_mid=400;
+
 byte decToBcd(byte val){
   return( (val/10*16) + (val%10) );
 }
@@ -118,9 +125,8 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
   
   else if(ric[0]==3){  //// limited time mode
     if(timeNow>=ric[1] and timeNow<=ric[2]){return HIGH;}
-    else{
+    else if (statedata[ind]==HIGH and timeNow>ric[2]) {
       //write a code to reset the array so it wont repeat
-      
       for(int i = 0; i < 4; i++) {
     
         realaydata[ind][i] = 0 ;  // put your value here.
@@ -145,7 +151,7 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
         return LOW;// turn off
         }
         
-      else if (count[ind]<ric[1]){// since we start using 0 it sould work
+      else if (count[ind]<ric[1]){// since we start using 0 it should work
         if (minu>=ric[2] and minu<ric[3]){// check if it's in the proper time limit we assigned
           return HIGH;
           }
@@ -174,7 +180,71 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
       else{return HIGH;}
         }
       }
-     else if(ric[0]==8){ // humidity mode
+
+
+     else if(ric[0]==6){// The Ldr mode
+      int input_val = analogRead(LDR);
+      int ldr_up=ric[3]+ldr_mid;
+      int ldr_down=ldr_mid-ric[3];
+      if (ric[1]==0){ //dark trigger on mode
+        if (input_val<ldr_down){
+          realaydata[ind][0]=8;// this is one time trigger mode so stop evaluvating
+          return HIGH;}
+        return LOW;
+        }
+      else if(ric[1]==1){//dark trigger off mode
+          if (input_val<ldr_down){
+            realaydata[ind][0]=8;// this is one time trigger mode so stop evaluvating
+            return LOW;
+            
+            }
+          return HIGH;
+          }
+       else if (ric[1]==2){ // dark on light off
+        if (input_val<ldr_down){
+          return HIGH;
+          }
+        else if (input_val>ldr_up){
+          return LOW;
+          }
+        else{
+          return statedata[ind];
+          }
+        
+       }
+       else if (ric[1]==3){ // dark off light on
+        if (input_val<ldr_down){
+          return LOW;
+          }
+        else if (input_val>ldr_up){
+          return HIGH;
+          }
+        else {
+          return statedata[ind];
+          }
+        }
+        else if (ric[1]==4){ // Bright On trigger mode
+          if (input_val>ldr_up){
+            realaydata[ind][0]=8;
+            return HIGH;
+           return LOW;
+            }
+          }
+         else if (ric[1]==5){// Bright Off trigger mode
+           if (input_val>ldr_up){
+            realaydata[ind][0]=8;
+            return LOW;}
+            
+           return HIGH;
+            }
+          
+        else if (ric[1]==8){ // Do not change current state
+          return statedata[ind];
+          
+          }
+        
+      }
+     else if (ric[0]==8){ // humidity mode
       int mid=(ric[2]+ric[1])/2;
       if (humid>ric[2]){ // too much humid
         return HIGH;
@@ -264,7 +334,8 @@ void loop() {
   timeNow=displayTime();// take time as integer
   //Serial.println(timeNow);
   if (Serial.available()>0){
-    
+    lcd.clear();
+    lcd.print("Incoming");
     blu_proc();//Get bluetooth input
     relay_update();//update the realy using input data
     bluetoothData="";// reset storeage
