@@ -278,7 +278,15 @@ void relay_update(){ // bluetoothData looks like 2,1,1,2359,2359
     clock_data[3]=atoi(strtok(NULL,","));
     setDS3231time(clock_data[0],clock_data[1],clock_data[2]);
     }
-  else{  
+  else if(relay==8){
+    String dataaa=String(statedata[0])+","+String(statedata[1])+","+String(statedata[2])+","+String(statedata[3]);
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Sending..");
+    Serial.println(dataaa);
+    delay(1000);
+    } 
+  else if(relay<4 and relay>=0){  
   realaydata[relay][0]=atoi(strtok(NULL,","));//set mode
   realaydata[relay][1]=atoi(strtok(NULL,","));
   realaydata[relay][2]=atoi(strtok(NULL,","));
@@ -332,12 +340,13 @@ void setup() {
 void loop() {
   
   timeNow=displayTime();// take time as integer
-  //Serial.println(timeNow);
+  //Serial.write(timeNow);
   if (Serial.available()>0){
     lcd.clear();
-    lcd.print("Incoming");
+    lcd.print("Wait..");
     blu_proc();//Get bluetooth input
     relay_update();//update the realy using input data
+    
     bluetoothData="";// reset storeage
     }
   
@@ -353,5 +362,5 @@ void loop() {
     digitalWrite(p,stat);
     }
    
-  delay(500);// delay can be increased but the clock will not work properly
+  delay(1000);// delay can be increased but the clock will not work properly
 }
