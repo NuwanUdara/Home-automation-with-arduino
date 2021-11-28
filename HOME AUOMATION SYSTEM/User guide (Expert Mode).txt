@@ -1,0 +1,70 @@
+This is for debus purpose and till the android app is realased
+
+Input from bluetooth will contain 5 integer array, separated by commas.
+p,m,v1,v2,v3
+p:- Port
+port-0,1,2,3
+v1,v2,v3 are situational
+
+m:- Mode
+Mode:-
+0:- Simple On-Off						\\mode 1
+v1- 0 for off, 1 for on
+Other parameters are not used but still need to be given
+example:- 1,0,1,0,0
+
+1:- Periodic Time Mode						\\mode 2
+v1- Start time in hhmm (Seconds are not used here)
+v2- Stop time
+v3 is not used but still need to be given
+example:- 2,1,1600,1640,0
+
+2:- Temparature Mode 1 ( for fans )// for cooling		\\mode 4
+v1- Temparature when the fan should be automatically turned on in Celsius
+v2- Temparature when the fan needs to be turned off
+v3 is not used.
+The fan will try to keep the room temparature in the give region. Once turned off, it only will turned on when reach the upper limit.
+example:- 2,2,28,22,0
+
+3:- Limited time mode // this will not repeat everyday, it will reset once the job is done mode 3
+v1-Start Time in hhmm
+v2- Stop time in hhmm
+v3 not used
+example:- 0,3,1000,1030,0
+
+4:- Hourly mode ( this is targeting ventilation systems)// will run specific time in minutes like in next 10 hours on 10min to 35min 10.10 to 10.35 ,11.10 to 11.35 and so on..//Mode 7
+v1:- How many times.
+v2:- Start at mm
+v3:- Stop at mm
+example:- 3,4,10,15,35
+
+5:- Temparature Mode 2 ( for heaters) // for heating \\mode 5
+v1:- Start at celcius (Lower bound)
+v2:- Stop at celcius (Upper bound)
+v3 not used
+example:- 1,5,15,35,0
+
+6:- LDR mode
+v1:- working mode
+0:- On when dark
+1:- Off when dark
+2:-On when dark and off when bright
+3:- off when dark and On when bright
+4:- On when bright
+5:- Off when bright
+8:- this is to stop further triggers. Do not send this though blutooth
+v2:-sensativity
+v3:-free time
+
+7:- This is basic Internal Clock time input // Set Time 
+m:- Seconds
+v1:- Minutes
+v2:- Hour in 24 hour style
+v3 is not used
+exaple:- 7,15,56,22,0
+
+8:- Humidty Mode // we will try to keep the humidity in a range// proper range is 30% to 50% //mode 6
+v1- Below level
+v2- Upper level
+v3- Reduendent but still have to provide a integer
+exaple:-3,8,30,50,0
