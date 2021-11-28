@@ -26,9 +26,27 @@ int animc=0;
 int ldone=0;
 int rdone=1;
 
+
+
 const int LDR = A0;
 int ldr_reading = 0;
 int ldr_mid=400;
+
+
+//Celcius Sign
+
+byte Character[8] =
+{
+0b10000,
+0b00000,
+0b01111,
+0b01001,
+0b01000,
+0b01001,
+0b01111,
+0b00000
+};
+
 
 byte decToBcd(byte val){
   return( (val/10*16) + (val%10) );
@@ -73,7 +91,7 @@ byte *hour)
   //*year = bcdToDec(Wire.read());
 }
 
-String sintd(byte num){
+String sintd(byte num){ //X to XX
   if (num<10){
     return "0"+String(num);
     }
@@ -124,7 +142,7 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
       }
   
   else if(ric[0]==3){  //// limited time mode
-    if(timeNow>=ric[1] and timeNow<=ric[2]){return HIGH;}
+    if(timeNow>=ric[1] and timeNow<ric[2]){return HIGH;}
     else if (statedata[ind]==HIGH and timeNow>ric[2]) {
       //write a code to reset the array so it wont repeat
       for(int i = 0; i < 4; i++) {
@@ -188,13 +206,13 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
       int ldr_down=ldr_mid-ric[3];
       if (ric[1]==0){ //dark trigger on mode
         if (input_val<ldr_down){
-          realaydata[ind][0]=8;// this is one time trigger mode so stop evaluvating
+          realaydata[ind][0]=9;// this is one time trigger mode so stop evaluvating
           return HIGH;}
         return LOW;
         }
       else if(ric[1]==1){//dark trigger off mode
           if (input_val<ldr_down){
-            realaydata[ind][0]=8;// this is one time trigger mode so stop evaluvating
+            realaydata[ind][0]=9;// this is one time trigger mode so stop evaluvating
             return LOW;
             
             }
@@ -225,14 +243,14 @@ int myrelayind(int ric[4],int ind){ // Using Time. blutooth input and sensor dat
         }
         else if (ric[1]==4){ // Bright On trigger mode
           if (input_val>ldr_up){
-            realaydata[ind][0]=8;
+            realaydata[ind][0]=9;
             return HIGH;
            return LOW;
             }
           }
          else if (ric[1]==5){// Bright Off trigger mode
            if (input_val>ldr_up){
-            realaydata[ind][0]=8;
+            realaydata[ind][0]=9;
             return LOW;}
             
            return HIGH;
@@ -306,22 +324,32 @@ void Temp_hum(){
   }
 String statef(byte ss){  // If LOW -> OFF, If HIGH -> ON
   if (ss==LOW){
-    return "0";
+    return "X";
   }
    else{
-    return "1";
+    return "/";
+    return;
     }
   }
 void lcdChandle(){
   lcd.setCursor(0,1);
   String dat="1-"+statef(statedata[0])+" "+"2-"+statef(statedata[1])+" "+"3-"+statef(statedata[2])+" "+"4-"+statef(statedata[3]);
+  
   anim=10;//dat.length();
   lcd.print(dat);
+
+  
+  
   }
 void lcdVhandle(String txt1,String txt2, String txt3){
   //lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print(txt1+" "+txt2+" "+txt3);
+  //lcd.print(txt1+" "+txt2+" "+txt3);
+  lcd.print(txt1+" "+txt2);
+  lcd.setCursor(11,0);
+  lcd.write(byte(0));
+  lcd.setCursor(13,0);
+  lcd.print(txt3);
   //lcd.setCursor(0,1);
   //lcd.print()
   }
@@ -333,8 +361,10 @@ void setup() {
   pinMode(11,OUTPUT);
   pinMode(12,OUTPUT);
   pinMode(13,OUTPUT);
+  
   Serial.begin(9600);
   setDS3231time(0,0,12);// a initial state for Now
+  lcd.createChar(0, Character);
 }
 
 void loop() {
@@ -351,7 +381,7 @@ void loop() {
     }
   
   Temp_hum();
-  lcdVhandle(hhmmss,String(round(temp))+"C",String(round(humid))+"%");
+  lcdVhandle(hhmmss,String(round(temp)),String(round(humid))+"%");
   lcdChandle();
   
   for (unsigned int a = 0; a < 4; a = a + 1){
