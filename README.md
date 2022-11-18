@@ -1,3 +1,4 @@
-This is a Acadamic project
+This is a Acadamic project 
 Maintained by 3 people
-The arduino code and Proteus simulation is available, and there will be a solidworks enclosure and a PCB schematic 
+The arduino code and Proteus simulation is available.
+Also, You can Find the schematics, PCB design and Enclosure design files.
